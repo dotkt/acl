@@ -157,6 +157,3 @@ android/acl/gradle
 .vscode
 
 cmake-build-debug
-/lib_acl_cpp/samples/acl_cpp_test/UpgradeLog.htm
-/lib_acl_cpp/samples/acl_cpp_test/acl_cpp_test.vcxproj.filters
-/lib_acl_cpp/samples/acl_cpp_test/acl_cpp_test.vcxproj

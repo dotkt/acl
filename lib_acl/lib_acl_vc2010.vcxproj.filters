@@ -881,6 +881,9 @@
     <ClCompile Include="src\stdlib\common\acl_ypipe.c">
       <Filter>Source Files\stdlib\common</Filter>
     </ClCompile>
+    <ClCompile Include=".\src\master\acl_server_sig.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="lib_acl.rc">
