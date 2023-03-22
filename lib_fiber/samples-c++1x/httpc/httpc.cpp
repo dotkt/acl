@@ -3,6 +3,9 @@
 #include <stdlib.h>
 
 //////////////////////////////////////////////////////////////////////////////
+#include <iostream>
+#include <chrono>
+using namespace std;
 
 static int start(const char* addr, int count) {
 	int i;
@@ -18,18 +21,22 @@ static int start(const char* addr, int count) {
 
 		acl::string tmp;
 		head.build_request(tmp);
-		printf(">>request: %s\r\n", tmp.c_str());
+		printf("threadi:%d>>request: %s\r\n",GetCurrentThreadId(), tmp.c_str());
+		auto start = std::chrono::high_resolution_clock::now(); // 记录开始时间
 		if (!req.request(NULL, 0)) {
 			printf("request error\r\n");
 			break;
 		}
-
-		printf(">>>begin read body\r\n");
-
+		auto end = std::chrono::high_resolution_clock::now(); // 记录结束时间
+		std::chrono::duration<double> diff = end - start; // 计算时间差
+		std::cout << "Code running time: " << diff.count() << " s\n"; // 输出运行时间，单位为秒
+		//printf(">>>begin read body\r\n");
+		
 		if (!req.get_body(buf)) {
 			printf("get response error\r\n");
 			break;
 		}
+
 		if (i == 0) {
 			printf("response: %s\r\n", buf.c_str());
 		}
@@ -50,9 +57,9 @@ static void usage(const char* procname) {
 }
 
 int main(int argc, char *argv[]) {
-	int  ch, nfiber = 1, count = 100;
+	int  ch, nfiber = 1, count = 30;
 	acl::string addr = "127.0.0.1:8088", event_type("kernel");
-
+	printf("current threadid:%d\n",GetCurrentThreadId());
 	acl::acl_cpp_init();
 	acl::log::stdout_open(true);
 
@@ -93,11 +100,19 @@ int main(int argc, char *argv[]) {
 	struct timeval begin;
 	gettimeofday(&begin, NULL);
 
-	for (int i = 0; i < nfiber; i++) {
-		go[&] {
-			total += start(addr, count);
-		};
-	}
+	//for (int i = 0; i < nfiber; i++) {
+	//	go[&] {
+	//		total += start(addr, count);
+	//	};
+	//}
+
+	go_wait_fiber []{
+		start("www.baidu.com",1);
+	};
+
+	go_wait_fiber []{
+		start("www.163.com",1);
+	};
 
 	acl::fiber::schedule_with(type);
 
