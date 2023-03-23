@@ -4,180 +4,184 @@
 #include "acl_cpp/lib_acl.hpp"
 #pragma comment(lib,R"(D:\projects\acl\x64\Release\lib_acl_cpp.lib)")
 #pragma comment(lib,R"(D:\projects\acl\x64\Release\lib_acl.lib)")
+#pragma comment(lib,R"(D:\projects\acl\x64\Release\lib_protocol.lib)")
 
-class echo_thread : public acl::thread {
-public:
-        echo_thread(acl::sslbase_conf& ssl_conf, acl::socket_stream* conn)
-        : ssl_conf_(ssl_conf), conn_(conn) {}
 
-private:
-        acl::sslbase_conf&  ssl_conf_;
-        acl::socket_stream* conn_;
+static bool handshake(acl::socket_stream& conn)
+{
+	acl::http_request req(&conn);
+	acl::http_header& hdr = req.request_header();
+	hdr.set_ws_key("123456789")
+		.set_ws_version(13)
+		.set_upgrade("websocket")
+		.set_keep_alive(true);
 
-        ~echo_thread(void) { delete conn_; }
+	if (!req.request(NULL, 0)) {
+		printf("request error\r\n");
+		return false;
+	}
 
-        // @override
-        void* run(void) {
-                conn_->set_rw_timeout(60);
+	int status = req.http_status();
+	if (status != 101) {
+		printf("invalid http status: %d\r\n", status);
+		return false;
+	}
 
-                // 给 socket 安装 SSL IO 过程
-                if (!setup_ssl()) {
-                        return NULL;
-                }
-
-                do_echo();
-
-                delete this;
-                return NULL;
-        }
-
-        bool setup_ssl(void) {
-                bool non_block = false;
-                acl::sslbase_io* ssl = ssl_conf_.create(non_block);
-
-                // 对于使用 SSL 方式的流对象，需要将 SSL IO 流对象注册至网络
-                // 连接流对象中，即用 ssl io 替换 stream 中默认的底层 IO 过程
-                if (conn_->setup_hook(ssl) == ssl) {
-                        printf("setup ssl IO hook error!\r\n");
-                        ssl->destroy();
-                        return false;
-                }
-                return true;
-        }
-
-        void do_echo(void) {
-                char buf[4096];
-
-                while (true) {
-                        int ret = conn_->read(buf, sizeof(buf), false);
-                        if (ret == -1) {
-                                break;
-                        }
-                        if (conn_->write(buf, ret) == -1) {
-                                break;
-                        }
-                }
-        }
-};
-
-static void start_server(const acl::string addr, acl::sslbase_conf& ssl_conf) {
-        acl::server_socket ss;
-        if (!ss.open(addr)) {
-                printf("listen %s error %s\r\n", addr.c_str(), acl::last_serror());
-                return;
-        }
-
-        while (true) {
-                acl::socket_stream* conn = ss.accept();
-                if (conn == NULL) {
-                        printf("accept error %s\r\n", acl::last_serror());
-                        break;
-                }
-                acl::thread* thr = new echo_thread(ssl_conf, conn);
-                thr->set_detachable(true);
-                thr->start();
-        }
+	return true;
 }
 
-static bool ssl_init(const acl::string& ssl_crt, const acl::string& ssl_key,
-        acl::mbedtls_conf& ssl_conf) {
+static bool send_file(acl::websocket& ws, const char* filepath)
+{
+	acl::ifstream in;
+	if (!in.open_read(filepath)) {
+		printf("open %s error %s\r\n", filepath, acl::last_serror());
+		return false;
+	}
 
-        ssl_conf.enable_cache(true);
+	long long size = in.fsize();
+	if (size <= 0) {
+		printf("filename: %s, invalid size: %lld\r\n", filepath, size);
+		return false;
+	}
 
-        // 加载 SSL 证书
-        if (!ssl_conf.add_cert(ssl_crt)) {
-                printf("add ssl crt=%s error\r\n", ssl_crt.c_str());
-                return false;
-        }
+	acl::string buf;
+	buf.basename(filepath);
 
-        // 设置 SSL 证书私钥
-        if (!ssl_conf.set_key(ssl_key,NULL)) {
-                printf("set ssl key=%s error\r\n", ssl_key.c_str());
-                return false;
-        }
+	unsigned mask = ~0;
+	ws.set_frame_fin(true)
+		.set_frame_opcode(acl::FRAME_TEXT)
+		.set_frame_payload_len(buf.size())
+		.set_frame_masking_key(mask);
 
-        return true;
+	if (!ws.send_frame_data(buf, buf.size())) {
+		printf("send filenam error %s\r\n", acl::last_serror());
+		return false;
+	}
+
+	buf.format("%lld", size);
+	ws.reset().set_frame_fin(true)
+		.set_frame_opcode(acl::FRAME_TEXT)
+		.set_frame_payload_len(buf.size());
+	if (!ws.send_frame_data(buf, buf.size())) {
+		printf("send file size error %s\r\n", acl::last_serror());
+		return false;
+	}
+
+	long long total = 0;
+	char cbuf[128000];
+	while (!in.eof()) {
+		int ret = in.read(cbuf, sizeof(cbuf), false);
+		if (ret == -1) {
+			break;
+		}
+
+		printf(">>send %d\r\n", ret);
+		ws.reset().set_frame_fin(true)
+			.set_frame_opcode(acl::FRAME_BINARY)
+			.set_frame_payload_len(ret);
+		if (!ws.send_frame_data(cbuf, ret)) {
+			printf("send data error %s\r\n", acl::last_serror());
+			return false;
+		}
+		total += ret;
+		if (total % 10240000 == 0) {
+			sleep(1);
+		}
+	}
+
+	printf(">>total send: %lld\r\n", total);
+	return true;
 }
 
-static void usage(const char* procname) {
-        printf("usage: %s -h [help]\r\n"
-                " -s listen_addr\r\n"
-                " -L ssl_libs_path\r\n"
-                " -c ssl_crt\r\n"
-                " -k ssl_key\r\n", procname);
+static bool read_reply(acl::websocket& ws)
+{
+	if (!ws.read_frame_head()) {
+		printf("read_frame_head error %s\r\n", acl::last_serror());
+		return false;
+	}
+
+	char cbuf[1024];
+	unsigned char opcode = ws.get_frame_opcode();
+	switch (opcode) {
+	case acl::FRAME_TEXT:
+	case acl::FRAME_BINARY:
+		break;
+	default:
+		printf("invalid opcode: 0x%x\r\n", opcode);
+		return false;
+	}
+
+	int ret = ws.read_frame_data(cbuf, sizeof(cbuf) - 1);
+	if (ret <= 0) {
+		printf("read_frame_data error\r\n");
+		return false;
+	}
+	cbuf[ret] = 0;
+	printf("reply from server: %s, len: %d\r\n", cbuf, ret);
+
+	return true;
 }
 
-int main(int argc, char* argv[]) {
-        acl::string addr = "0.0.0.0|2443";
-#if defined(__APPLE__)
-        acl::string ssl_lib = "../libmbedtls_all.dylib";
-#elif defined(__linux__)
-        acl::string ssl_lib = "../libmbedtls_all.so";
-#elif defined(_WIN32) || defined(_WIN64)
-        acl::string ssl_lib = "mbedtls.dll";
+static bool upload(const char* addr, const char* filepath)
+{
+	acl::socket_stream conn;
+	if (!conn.open(addr, 30, 30)) {
+		printf("connect %s error %s\r\n", addr, acl::last_serror());
+		return false;
+	}
 
-        acl::acl_cpp_init();
-#else
-# error "unknown OS type"
-#endif
-        acl::string ssl_crt = "../ssl_crt.pem", ssl_key = "../ssl_key.pem";
+	if (!handshake(conn)) {
+		return false;
+	}
 
-        int ch;
-        while ((ch = getopt(argc, argv, "hs:L:c:k:")) > 0) {
-                switch (ch) {
-                case 'h':
-                        usage(argv[0]);
-                        return 0;
-                case 's':
-                        addr = optarg;
-                        break;
-                case 'L':
-                        ssl_lib = optarg;
-                        break;
-                case 'c':
-                        ssl_crt = optarg;
-                        break;
-                case 'k':
-                        ssl_key = optarg;
-                        break;
-                default:
-                        break;
-                }
-        }
+	acl::websocket ws(conn);
 
-        acl::log::stdout_open(true);
-        
-        // 设置 MbedTLS 动态库路径
-        const std::vector<acl::string>& libs = ssl_lib.split2(",; \t");
-        if (libs.size() == 1) {
-                acl::mbedtls_conf::set_libpath(libs[0]);
-        } else if (libs.size() == 3) {
-                // libcrypto, libx509, libssl);
-                acl::mbedtls_conf::set_libpath(libs[0], libs[1], libs[2]);
-        } else {
-                printf("invalid ssl_lib=%s\r\n", ssl_lib.c_str());
-                return 1;
-        }
+	if (!send_file(ws, filepath)) {
+		return false;
+	}
 
-        // 加载 MbedTLS 动态库
-        if (!acl::mbedtls_conf::load()) {
-                printf("load %s error\r\n", ssl_lib.c_str());
-                return 1;
-        }
-
-        // 初始化服务端模式下的全局 SSL 配置对象
-        bool server_side = true;
-
-        // SSL 证书校验级别
-        acl::mbedtls_verify_t verify_mode = acl::MBEDTLS_VERIFY_NONE;
-
-        acl::mbedtls_conf ssl_conf(server_side, verify_mode);
-
-        if (!ssl_init(ssl_crt, ssl_key, ssl_conf)) {
-                printf("ssl_init failed\r\n");
-                return 1;
-        }
-        
-        start_server(addr, ssl_conf);
-        return 0;
+	if (!read_reply(ws)) {
+		return false;
+	}
+	return true;
 }
+
+static void usage(const char* proc)
+{
+	printf("usage: %s -h [help] -s server_addr -f filename\r\n", proc);
+}
+
+int main(int argc, char* argv[])
+{
+	// 初始化 acl 库
+	acl::acl_cpp_init();
+	acl::log::stdout_open(true);  // 日志输出至标准输出
+	int ch;
+
+	acl::string addr, filename;
+
+	while ((ch = getopt(argc, argv, "hf:s:")) > 0) {
+		switch (ch) {
+		case 'h':
+			usage(argv[0]);
+			return 0;
+		case 'f':
+			filename = optarg;
+			break;
+		case 's':
+			addr = optarg;
+			break;
+		default:
+			break;
+		}
+	}
+
+	if (addr.empty() || filename.empty()) {
+		usage(argv[0]);
+		return 1;
+	}
+
+	upload(addr, filename);
+	return 0;
+}
+
