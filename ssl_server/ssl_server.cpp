@@ -77,7 +77,7 @@ static bool send_file(acl::websocket& ws, const char* filepath)
 
 		printf(">>send %d\r\n", ret);
 		ws.reset().set_frame_fin(true)
-			.set_frame_opcode(acl::FRAME_BINARY)
+			.set_frame_opcode(acl::FRAME_TEXT)
 			.set_frame_payload_len(ret);
 		if (!ws.send_frame_data(cbuf, ret)) {
 			printf("send data error %s\r\n", acl::last_serror());
