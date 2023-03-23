@@ -2,6 +2,7 @@
 //D:\projects\acl\lib_acl\include\lib_acl.h
 #include "lib_acl.h"
 #include "acl_cpp/lib_acl.hpp"
+#include "fiber/lib_fiber.hpp"
 #pragma comment(lib,R"(D:\projects\acl\x64\Release\lib_acl_cpp.lib)")
 #pragma comment(lib,R"(D:\projects\acl\x64\Release\lib_acl.lib)")
 #pragma comment(lib,R"(D:\projects\acl\x64\Release\lib_protocol.lib)")
@@ -158,30 +159,9 @@ int main(int argc, char* argv[])
 	acl::log::stdout_open(true);  // 日志输出至标准输出
 	int ch;
 
-	acl::string addr, filename;
+	acl::string addr, filename=R"(D:\projects\acl\x64\Release\notes.txt)";
 
-	while ((ch = getopt(argc, argv, "hf:s:")) > 0) {
-		switch (ch) {
-		case 'h':
-			usage(argv[0]);
-			return 0;
-		case 'f':
-			filename = optarg;
-			break;
-		case 's':
-			addr = optarg;
-			break;
-		default:
-			break;
-		}
-	}
-
-	if (addr.empty() || filename.empty()) {
-		usage(argv[0]);
-		return 1;
-	}
-
-	upload(addr, filename);
+	upload("127.0.0.1:5678", filename);
 	return 0;
 }
 

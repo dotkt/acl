@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tcp_websocket_client.cpp">
+    <ClCompile Include="wss_client.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

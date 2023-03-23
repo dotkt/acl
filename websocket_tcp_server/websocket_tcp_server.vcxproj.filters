@@ -15,8 +15,25 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="tcp_websocket_client.cpp">
+    <ClCompile Include="websocket_tcp_server.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="http_servlet.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="master_service.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="http_servlet.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="master_service.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
