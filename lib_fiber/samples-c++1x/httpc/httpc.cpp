@@ -24,16 +24,19 @@ static int start(const char* addr, int count) {
 			break;
 		}
 
-		printf(">>>begin read body\r\n");
+		
 
 		if (!req.get_body(buf)) {
 			printf("get response error\r\n");
 			break;
 		}
-		if (i == 0) {
-			printf("response: %s\r\n", buf.c_str());
-		}
+		printf("request done.response length: %d\r\n", buf.size());
+		//if (i == 0) {
+		//	//printf("response: %s\r\n", buf.c_str());
+		//	printf("response length: %d\r\n", buf.size());
+		//}
 		buf.clear();
+		return buf.size();
 	}
 	return i;
 }
@@ -50,8 +53,8 @@ static void usage(const char* procname) {
 }
 
 int main(int argc, char *argv[]) {
-	int  ch, nfiber = 1, count = 100;
-	acl::string addr = "127.0.0.1:8088", event_type("kernel");
+	int  ch, nfiber = 1, count = 3;
+	acl::string addr = "www.baidu.com", event_type("kernel");
 
 	acl::acl_cpp_init();
 	acl::log::stdout_open(true);
@@ -93,11 +96,25 @@ int main(int argc, char *argv[]) {
 	struct timeval begin;
 	gettimeofday(&begin, NULL);
 
-	for (int i = 0; i < nfiber; i++) {
-		go[&] {
-			total += start(addr, count);
-		};
-	}
+	//for (int i = 0; i < nfiber; i++) {
+	//	go[&] {
+	//		total += start(addr, count);
+	//	};
+	//}
+
+	go[&] 
+	{
+		while(1)
+		{
+			auto result=start("www.baidu.com",1);
+			sleep(1);
+		}
+	};
+
+
+
+
+	
 
 	acl::fiber::schedule_with(type);
 

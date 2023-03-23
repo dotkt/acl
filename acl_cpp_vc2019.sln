@@ -167,6 +167,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "redis_builder", "app\redis_
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "https_request", "lib_acl_cpp\samples\ssl\https_request\https_request_vc2019.vcxproj", "{4D42F462-A2FE-4B4A-A680-93668FA128A6}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ssl_server", "ssl_server\ssl_server.vcxproj", "{7873EBB7-6734-4066-B5A7-40AF2591849F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Mixed Platforms = Debug|Mixed Platforms
@@ -925,6 +927,36 @@ Global
 		{4D42F462-A2FE-4B4A-A680-93668FA128A6}.Template|Win32.Build.0 = Debug|Win32
 		{4D42F462-A2FE-4B4A-A680-93668FA128A6}.Template|x64.ActiveCfg = Debug|x64
 		{4D42F462-A2FE-4B4A-A680-93668FA128A6}.Template|x64.Build.0 = Debug|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Debug|Mixed Platforms.ActiveCfg = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Debug|Mixed Platforms.Build.0 = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Debug|Win32.ActiveCfg = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Debug|Win32.Build.0 = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Debug|x64.ActiveCfg = Debug|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Debug|x64.Build.0 = Debug|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.DebugDll|Mixed Platforms.ActiveCfg = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.DebugDll|Mixed Platforms.Build.0 = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.DebugDll|Win32.ActiveCfg = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.DebugDll|Win32.Build.0 = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.DebugDll|x64.ActiveCfg = Debug|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.DebugDll|x64.Build.0 = Debug|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Release|Mixed Platforms.ActiveCfg = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Release|Mixed Platforms.Build.0 = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Release|Win32.ActiveCfg = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Release|Win32.Build.0 = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Release|x64.ActiveCfg = Release|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Release|x64.Build.0 = Release|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Releasedll|Mixed Platforms.ActiveCfg = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Releasedll|Mixed Platforms.Build.0 = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Releasedll|Win32.ActiveCfg = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Releasedll|Win32.Build.0 = Release|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Releasedll|x64.ActiveCfg = Release|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Releasedll|x64.Build.0 = Release|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Template|Mixed Platforms.ActiveCfg = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Template|Mixed Platforms.Build.0 = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Template|Win32.ActiveCfg = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Template|Win32.Build.0 = Debug|Win32
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Template|x64.ActiveCfg = Debug|x64
+		{7873EBB7-6734-4066-B5A7-40AF2591849F}.Template|x64.Build.0 = Debug|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
